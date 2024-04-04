@@ -10,13 +10,52 @@ import (
 )
 
 const createApp = `-- name: CreateApp :one
-INSERT INTO app (id) VALUES ( ? ) RETURNING id
+INSERT INTO app (id) VALUES (?) RETURNING id
 `
 
 func (q *Queries) CreateApp(ctx context.Context, id int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createApp, id)
 	err := row.Scan(&id)
 	return id, err
+}
+
+const createRecord = `-- name: CreateRecord :one
+INSERT INTO record (version, path, body) VALUES (?, ?, ?) RETURNING id, version, path, body, created_at
+`
+
+type CreateRecordParams struct {
+	Version int64
+	Path    string
+	Body    string
+}
+
+func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Record, error) {
+	row := q.db.QueryRowContext(ctx, createRecord, arg.Version, arg.Path, arg.Body)
+	var i Record
+	err := row.Scan(
+		&i.ID,
+		&i.Version,
+		&i.Path,
+		&i.Body,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createVersion = `-- name: CreateVersion :one
+INSERT INTO version (name, app) VALUES (?, ?) RETURNING id, name, app
+`
+
+type CreateVersionParams struct {
+	Name string
+	App  int64
+}
+
+func (q *Queries) CreateVersion(ctx context.Context, arg CreateVersionParams) (Version, error) {
+	row := q.db.QueryRowContext(ctx, createVersion, arg.Name, arg.App)
+	var i Version
+	err := row.Scan(&i.ID, &i.Name, &i.App)
+	return i, err
 }
 
 const getApp = `-- name: GetApp :one
@@ -28,4 +67,16 @@ func (q *Queries) GetApp(ctx context.Context, id int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getApp, id)
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getVersion = `-- name: GetVersion :one
+select id, name, app from version
+where name = ?
+`
+
+func (q *Queries) GetVersion(ctx context.Context, name string) (Version, error) {
+	row := q.db.QueryRowContext(ctx, getVersion, name)
+	var i Version
+	err := row.Scan(&i.ID, &i.Name, &i.App)
+	return i, err
 }
