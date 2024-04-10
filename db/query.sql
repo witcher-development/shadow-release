@@ -15,4 +15,4 @@ INSERT INTO version (name, app) VALUES (?, ?) RETURNING *;
 
 
 -- name: CreateRecord :one
-INSERT INTO record (version, path, body) VALUES (?, ?, ?) RETURNING *;
+INSERT INTO record (version, path, reqbody, resbody) VALUES (?, ?, ?, ?) RETURNING *;

@@ -1,6 +1,10 @@
 package main
 
-import "shadow_release/repo"
+import (
+	"shadow_release/repo"
+	"shadow_release/shadow_repo"
+	"sync"
+)
 
 // func (s *Tool)
 
@@ -28,7 +32,19 @@ import "shadow_release/repo"
 // }
 
 func main() {
-	repo.Server()
+	wait_group := sync.WaitGroup{}
+	wait_group.Add(2)
+
+	go func() {
+		defer wait_group.Done()
+		repo.Server()
+	}()
+	go func() {
+		defer wait_group.Done()
+		shadow_repo.Server()
+	}()
+
+	wait_group.Wait()
 }
 
 

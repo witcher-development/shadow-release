@@ -16,7 +16,8 @@ type Record struct {
 	ID        int64
 	Version   int64
 	Path      string
-	Body      string
+	Reqbody   string
+	Resbody   string
 	CreatedAt sql.NullTime
 }
 

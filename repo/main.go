@@ -1,13 +1,17 @@
 package repo
 
 import (
+	"fmt"
 	"net/http"
+	"shadow_release/tool"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	"shadow_release/tool"
 )
+
+
+var SHADOW_URL = "http://localhost:1235"
 
 
 func Server() {
@@ -15,8 +19,13 @@ func Server() {
 
 	t := tool.New(tool.Config{1, "original"})
 
+	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
-		t.Track(ctx.Path(), resBody)
+		go func(base string, path string) {
+			t.Track(ctx.Path(), reqBody, resBody)
+			_, err := http.Get(strings.Join([]string{base, path}, ""))
+			fmt.Println(err)
+		}(SHADOW_URL, ctx.Path())
 		// fmt.Println(ctx.Path())
 		// fmt.Println("reqBody")
 		// fmt.Println(reqBody)

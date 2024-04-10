@@ -20,23 +20,30 @@ func (q *Queries) CreateApp(ctx context.Context, id int64) (int64, error) {
 }
 
 const createRecord = `-- name: CreateRecord :one
-INSERT INTO record (version, path, body) VALUES (?, ?, ?) RETURNING id, version, path, body, created_at
+INSERT INTO record (version, path, reqbody, resbody) VALUES (?, ?, ?, ?) RETURNING id, version, path, reqbody, resbody, created_at
 `
 
 type CreateRecordParams struct {
 	Version int64
 	Path    string
-	Body    string
+	Reqbody string
+	Resbody string
 }
 
 func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Record, error) {
-	row := q.db.QueryRowContext(ctx, createRecord, arg.Version, arg.Path, arg.Body)
+	row := q.db.QueryRowContext(ctx, createRecord,
+		arg.Version,
+		arg.Path,
+		arg.Reqbody,
+		arg.Resbody,
+	)
 	var i Record
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
 		&i.Path,
-		&i.Body,
+		&i.Reqbody,
+		&i.Resbody,
 		&i.CreatedAt,
 	)
 	return i, err

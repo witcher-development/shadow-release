@@ -14,12 +14,14 @@ type Tool struct {
 	version int64
 }
 
-func (s *Tool) Track(path string, body []byte) {
+func (s *Tool) Track(path string, reqbody []byte, resbody []byte) {
 	ctx, queries := db.GetQueries()
+	fmt.Println(s.version, path)
 	queries.CreateRecord(ctx, db.CreateRecordParams{
 		Version: s.version,
 		Path: path,
-		Body: string(body),
+		Reqbody: string(reqbody),
+		Resbody: string(resbody),
 	})
 }
 
@@ -44,8 +46,6 @@ func New(config Config) (s *Tool) {
 		}
 		version = version_new
 	}
-
-	fmt.Println(version)
 
 	s = &Tool{
 		key: config.Key,
