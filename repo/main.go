@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"shadow_release/tool"
@@ -23,17 +24,33 @@ func Server() {
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
 		go func(base string, path string) {
 			t.Track(ctx.Path(), reqBody, resBody)
-			_, err := http.Get(strings.Join([]string{base, path}, ""))
+
+			method := ctx.Request().Method
+			var err error 
+			if method == "POST" {
+				_, err = http.Post(
+					strings.Join([]string{base, path}, ""),
+					ctx.Request().Header["Content-Type"][0],
+					bytes.NewReader(reqBody),
+				)
+			} else if method == "GET" {
+				_, err = http.Get(strings.Join([]string{base, path}, ""))
+			}
+
 			fmt.Println(err)
 		}(SHADOW_URL, ctx.Path())
-		// fmt.Println(ctx.Path())
-		// fmt.Println("reqBody")
-		// fmt.Println(reqBody)
+		fmt.Println(ctx.Request().Method)
+		fmt.Println("reqBody")
+		fmt.Println(reqBody)
 		// fmt.Println("resBody")
 		// fmt.Println(resBody)
 	}))
 
 	e.GET("/hi", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello World")
+	})
+
+	e.POST("/hi", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello World")
 	})
 
