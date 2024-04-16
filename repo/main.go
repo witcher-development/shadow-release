@@ -1,10 +1,10 @@
-package repo
+package main
 
 import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"shadow_release/tool"
+	sr "shadow_release"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -15,10 +15,10 @@ import (
 var SHADOW_URL = "http://localhost:1235"
 
 
-func Server() {
+func server() {
 	e := echo.New()
 
-	t := tool.New(tool.Config{1, "original"})
+	t := sr.New(sr.Config{1, "original"})
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
@@ -55,4 +55,8 @@ func Server() {
 	})
 
 	e.Logger.Fatal(e.Start(":1234"))
+}
+
+func main() {
+	server()
 }
