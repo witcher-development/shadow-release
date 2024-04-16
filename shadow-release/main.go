@@ -1,10 +1,13 @@
 package shadow_release
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"shadow_release/internal/db"
 
+	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -15,15 +18,19 @@ type Tool struct {
 }
 
 func (s *Tool) Track(path string, reqbody []byte, resbody []byte) {
-	fmt.Println(path)
-	ctx, queries := db.GetQueries()
-	fmt.Println(s.version, path)
-	queries.CreateRecord(ctx, db.CreateRecordParams{
-		Version: s.version,
-		Path: path,
-		Reqbody: string(reqbody),
-		Resbody: string(resbody),
-	})
+	body := fmt.Sprintf(`{
+		"reqbody": "%v",
+		"resbody": "%v"
+	}`, reqbody, resbody)
+	// fmt.Println(body)
+	_, err := http.Post(
+		"http://localhost:3333/track",
+		"application/json",
+		bytes.NewReader([]byte(body)),
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type Config struct {
@@ -55,7 +62,26 @@ func New(config Config) (s *Tool) {
 	return s
 }
 
-func main() {
+func StartBackend() {
+	e := echo.New()
+
+	e.POST("/track", func (c echo.Context) error  {
+		var json map[string]interface{} = map[string]interface{}{}
+		if err := c.Bind(&json); err != nil {
+			panic(err)
+		}
+		fmt.Println(json)
+		ctx, queries := db.GetQueries()
+		queries.CreateRecord(ctx, db.CreateRecordParams{
+			Version: 1,
+			Path: "",
+			Reqbody: string(reqbody),
+			Resbody: string(resbody),
+		})
+		return nil
+	})
+
+	e.Logger.Fatal(e.Start(":3333"))
 }
 
 

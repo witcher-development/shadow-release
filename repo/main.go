@@ -39,9 +39,9 @@ func server() {
 
 			fmt.Println(err)
 		}(SHADOW_URL, ctx.Path())
-		fmt.Println(ctx.Request().Method)
-		fmt.Println("reqBody")
-		fmt.Println(reqBody)
+		// fmt.Println(ctx.Request().Method)
+		// fmt.Println("reqBody")
+		// fmt.Println(reqBody)
 		// fmt.Println("resBody")
 		// fmt.Println(resBody)
 	}))
