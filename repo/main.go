@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	sr "shadow_release"
 	"strings"
@@ -36,8 +35,9 @@ func server() {
 			} else if method == "GET" {
 				_, err = http.Get(strings.Join([]string{base, path}, ""))
 			}
-
-			fmt.Println(err)
+			if err != nil {
+				panic(err)
+			}
 		}(SHADOW_URL, ctx.Path())
 		// fmt.Println(ctx.Request().Method)
 		// fmt.Println("reqBody")

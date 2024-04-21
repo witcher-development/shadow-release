@@ -3,7 +3,9 @@ package shadow_release
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"shadow_release/internal/db"
 
@@ -13,20 +15,34 @@ import (
 
 
 type Tool struct {
-	key int64
-	version int64
+	Key int64 `json:"key"`
+	Version int64 `json:"version"`
+}
+
+type TrackRequestPayload struct {
+	Meta *Tool `json:"meta"`
+	Path string
+	Reqbody []byte
+	Resbody []byte
 }
 
 func (s *Tool) Track(path string, reqbody []byte, resbody []byte) {
-	body := fmt.Sprintf(`{
-		"reqbody": "%v",
-		"resbody": "%v"
-	}`, reqbody, resbody)
-	// fmt.Println(body)
-	_, err := http.Post(
+	fmt.Println(s.Version)
+	fmt.Println(s.Key)
+	body := TrackRequestPayload{
+		Meta: s,
+		Path: path,
+		Reqbody: reqbody,
+		Resbody: resbody,
+	}
+	body_json, err := json.Marshal(body)
+	if err != nil {
+		panic(err)
+	}
+	_, err = http.Post(
 		"http://localhost:3333/track",
 		"application/json",
-		bytes.NewReader([]byte(body)),
+		bytes.NewBuffer(body_json),
 	)
 	if err != nil {
 		panic(err)
@@ -39,25 +55,32 @@ type Config struct {
 }
 
 func New(config Config) (s *Tool) {
-	ctx, queries := db.GetQueries()
-	version, err := queries.GetVersion(ctx, config.Version)
-	if err != nil && err != sql.ErrNoRows {
+	config_json, err := json.Marshal(config)
+	if err != nil {
 		panic(err)
 	}
-	if err == sql.ErrNoRows {
-		version_new, err := queries.CreateVersion(ctx, db.CreateVersionParams{
-			Name: config.Version,
-			App: config.Key,
-		})
-		if err != nil {
-			panic(err)
-		}
-		version = version_new
+	response, err := http.Post(
+		"http://localhost:3333/init",
+		"application/json",
+		bytes.NewReader(config_json),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer response.Body.Close()
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var body db.Version
+	if err = json.Unmarshal(data, &body); err != nil {
+		panic(err)
 	}
 
 	s = &Tool{
-		key: config.Key,
-		version: version.ID,
+		Key: body.App,
+		Version: body.ID,
 	}
 	return s
 }
@@ -65,19 +88,58 @@ func New(config Config) (s *Tool) {
 func StartBackend() {
 	e := echo.New()
 
-	e.POST("/track", func (c echo.Context) error  {
-		var json map[string]interface{} = map[string]interface{}{}
-		if err := c.Bind(&json); err != nil {
+	e.POST("/init", func(c echo.Context) error {
+		var config Config
+		if err := c.Bind(&config); err != nil {
 			panic(err)
 		}
-		fmt.Println(json)
 		ctx, queries := db.GetQueries()
-		queries.CreateRecord(ctx, db.CreateRecordParams{
-			Version: 1,
-			Path: "",
-			Reqbody: string(reqbody),
-			Resbody: string(resbody),
+		version, err := queries.GetVersion(ctx, config.Version)
+		if err != nil && err != sql.ErrNoRows {
+			panic(err)
+		}
+		if err == sql.ErrNoRows {
+			version_new, err := queries.CreateVersion(ctx, db.CreateVersionParams{
+				Name: config.Version,
+				App: config.Key,
+			})
+			if err != nil {
+				panic(err)
+			}
+			version = version_new
+		}
+
+		return c.JSON(http.StatusOK, version)
+	})
+
+	e.POST("/track", func (c echo.Context) error  {
+		// text, err := io.ReadAll(c.Request().Body)
+		// if err == nil {
+		// 	fmt.Println("ReadAll result")
+		// 	fmt.Println(string(text))
+		// }
+		// if err != nil {
+		// 	fmt.Println("ReadAll failed")
+		// 	panic(nil)
+
+		// fmt.Println(string(c.Request().Body))
+		var record TrackRequestPayload
+		err := json.NewDecoder(c.Request().Body).Decode(&record)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("recieved", record)
+		ctx, queries := db.GetQueries()
+		db_record, err := queries.CreateRecord(ctx, db.CreateRecordParams{
+			Version: record.Meta.Version,
+			Path: record.Path,
+			Reqbody: string(record.Reqbody),
+			Resbody: string(record.Resbody),
 		})
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(db_record)
 		return nil
 	})
 
