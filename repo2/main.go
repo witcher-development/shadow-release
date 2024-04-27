@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	sr "shadow_release"
 
@@ -17,8 +16,7 @@ func server() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
-		fmt.Println(ctx.Path(), ctx.Request().Method, reqBody)
-		t.Track(ctx.Path(), reqBody, resBody)
+		t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody)
 	}))
 
 	e.GET("/hi", func(c echo.Context) error {

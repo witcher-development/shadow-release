@@ -22,7 +22,7 @@ func server() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
 		go func(base string, path string) {
-			t.Track(ctx.Path(), reqBody, resBody)
+			t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody)
 
 			method := ctx.Request().Method
 			var err error 

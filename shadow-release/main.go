@@ -22,16 +22,16 @@ type Tool struct {
 type TrackRequestPayload struct {
 	Meta *Tool `json:"meta"`
 	Path string
+	Method string
 	Reqbody []byte
 	Resbody []byte
 }
 
-func (s *Tool) Track(path string, reqbody []byte, resbody []byte) {
-	fmt.Println(s.Version)
-	fmt.Println(s.Key)
+func (s *Tool) Track(path string, method string, reqbody []byte, resbody []byte) {
 	body := TrackRequestPayload{
 		Meta: s,
 		Path: path,
+		Method: method,
 		Reqbody: reqbody,
 		Resbody: resbody,
 	}
@@ -113,16 +113,6 @@ func StartBackend() {
 	})
 
 	e.POST("/track", func (c echo.Context) error  {
-		// text, err := io.ReadAll(c.Request().Body)
-		// if err == nil {
-		// 	fmt.Println("ReadAll result")
-		// 	fmt.Println(string(text))
-		// }
-		// if err != nil {
-		// 	fmt.Println("ReadAll failed")
-		// 	panic(nil)
-
-		// fmt.Println(string(c.Request().Body))
 		var record TrackRequestPayload
 		err := json.NewDecoder(c.Request().Body).Decode(&record)
 		if err != nil {
@@ -133,6 +123,7 @@ func StartBackend() {
 		db_record, err := queries.CreateRecord(ctx, db.CreateRecordParams{
 			Version: record.Meta.Version,
 			Path: record.Path,
+			Method: record.Method,
 			Reqbody: string(record.Reqbody),
 			Resbody: string(record.Resbody),
 		})

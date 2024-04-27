@@ -20,12 +20,13 @@ func (q *Queries) CreateApp(ctx context.Context, id int64) (int64, error) {
 }
 
 const createRecord = `-- name: CreateRecord :one
-INSERT INTO record (version, path, reqbody, resbody) VALUES (?, ?, ?, ?) RETURNING id, version, path, reqbody, resbody, created_at
+INSERT INTO record (version, path, method, reqbody, resbody) VALUES (?, ?, ?, ?, ?) RETURNING id, version, path, method, reqbody, resbody, created_at
 `
 
 type CreateRecordParams struct {
 	Version int64
 	Path    string
+	Method  string
 	Reqbody string
 	Resbody string
 }
@@ -34,6 +35,7 @@ func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Rec
 	row := q.db.QueryRowContext(ctx, createRecord,
 		arg.Version,
 		arg.Path,
+		arg.Method,
 		arg.Reqbody,
 		arg.Resbody,
 	)
@@ -42,6 +44,7 @@ func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Rec
 		&i.ID,
 		&i.Version,
 		&i.Path,
+		&i.Method,
 		&i.Reqbody,
 		&i.Resbody,
 		&i.CreatedAt,

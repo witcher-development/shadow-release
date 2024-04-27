@@ -13,6 +13,7 @@ create table if not exists record(
 	id integer PRIMARY KEY,
 	version integer not null,
 	path text not null,
+	method text not null,
 	reqbody text not null,
 	resbody text not null,
 	created_at datetime default CURRENT_TIMESTAMP,
