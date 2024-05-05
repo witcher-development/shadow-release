@@ -2,12 +2,14 @@ package shadow_release
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"shadow_release/internal/db"
+	"shadow_release/internal/views"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
@@ -134,8 +136,10 @@ func StartBackend() {
 		return nil
 	})
 
+	e.GET("/", func(c echo.Context) error {
+		return views.Page().Render(context.Background(), c.Response().Writer)
+	})
+
 	e.Logger.Fatal(e.Start(":3333"))
 }
-
-
 
