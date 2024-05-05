@@ -27,15 +27,17 @@ type TrackRequestPayload struct {
 	Method string
 	Reqbody []byte
 	Resbody []byte
+	Synckey string
 }
 
-func (s *Tool) Track(path string, method string, reqbody []byte, resbody []byte) {
+func (s *Tool) Track(path string, method string, reqbody []byte, resbody []byte, syncKey string) {
 	body := TrackRequestPayload{
 		Meta: s,
 		Path: path,
 		Method: method,
 		Reqbody: reqbody,
 		Resbody: resbody,
+		Synckey: syncKey,
 	}
 	body_json, err := json.Marshal(body)
 	if err != nil {
@@ -128,6 +130,7 @@ func StartBackend() {
 			Method: record.Method,
 			Reqbody: string(record.Reqbody),
 			Resbody: string(record.Resbody),
+			Synckey: string(record.Synckey),
 		})
 		if err != nil {
 			panic(err)
@@ -142,7 +145,11 @@ func StartBackend() {
 		if err != nil && err != sql.ErrNoRows {
 			panic(err)
 		}
-		return views.Page(records).Render(context.Background(), c.Response().Writer)
+		versions, err := queries.GetVersions(ctx)
+		if err != nil && err != sql.ErrNoRows {
+			panic(err)
+		}
+		return views.Page(records, versions).Render(context.Background(), c.Response().Writer)
 	})
 	e.Static("/assets", "internal/views/assets")
 	// e.File("/", ")

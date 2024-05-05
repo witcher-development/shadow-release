@@ -1,3 +1,18 @@
 body {
 	margin: 0
 }
+
+.versions {
+	display: flex
+}
+.version {
+	width: 200px
+}
+
+.record {
+	display: flex
+}
+
+.empty {
+	background-color: red
+}

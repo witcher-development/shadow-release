@@ -20,7 +20,7 @@ func (q *Queries) CreateApp(ctx context.Context, id int64) (int64, error) {
 }
 
 const createRecord = `-- name: CreateRecord :one
-INSERT INTO record (version, path, method, reqbody, resbody) VALUES (?, ?, ?, ?, ?) RETURNING id, version, path, method, reqbody, resbody, created_at
+INSERT INTO record (version, path, method, reqbody, resbody, synckey) VALUES (?, ?, ?, ?, ?, ?) RETURNING id, version, path, method, reqbody, resbody, synckey, created_at
 `
 
 type CreateRecordParams struct {
@@ -29,6 +29,7 @@ type CreateRecordParams struct {
 	Method  string
 	Reqbody string
 	Resbody string
+	Synckey string
 }
 
 func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Record, error) {
@@ -38,6 +39,7 @@ func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Rec
 		arg.Method,
 		arg.Reqbody,
 		arg.Resbody,
+		arg.Synckey,
 	)
 	var i Record
 	err := row.Scan(
@@ -47,6 +49,7 @@ func (q *Queries) CreateRecord(ctx context.Context, arg CreateRecordParams) (Rec
 		&i.Method,
 		&i.Reqbody,
 		&i.Resbody,
+		&i.Synckey,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -80,7 +83,7 @@ func (q *Queries) GetApp(ctx context.Context, id int64) (int64, error) {
 }
 
 const getRecords = `-- name: GetRecords :many
-select id, version, path, method, reqbody, resbody, created_at from record
+select id, version, path, method, reqbody, resbody, synckey, created_at from record
 `
 
 func (q *Queries) GetRecords(ctx context.Context) ([]Record, error) {
@@ -99,6 +102,7 @@ func (q *Queries) GetRecords(ctx context.Context) ([]Record, error) {
 			&i.Method,
 			&i.Reqbody,
 			&i.Resbody,
+			&i.Synckey,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -124,4 +128,31 @@ func (q *Queries) GetVersion(ctx context.Context, name string) (Version, error) 
 	var i Version
 	err := row.Scan(&i.ID, &i.Name, &i.App)
 	return i, err
+}
+
+const getVersions = `-- name: GetVersions :many
+select id, name, app from version
+`
+
+func (q *Queries) GetVersions(ctx context.Context) ([]Version, error) {
+	rows, err := q.db.QueryContext(ctx, getVersions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Version
+	for rows.Next() {
+		var i Version
+		if err := rows.Scan(&i.ID, &i.Name, &i.App); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

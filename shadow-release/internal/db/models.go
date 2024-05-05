@@ -19,6 +19,7 @@ type Record struct {
 	Method    string
 	Reqbody   string
 	Resbody   string
+	Synckey   string
 	CreatedAt sql.NullTime
 }
 

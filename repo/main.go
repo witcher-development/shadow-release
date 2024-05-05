@@ -6,6 +6,7 @@ import (
 	sr "shadow_release"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -22,18 +23,20 @@ func server() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
 		go func(base string, path string) {
-			t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody)
+			syncKey := uuid.New().String()
+			t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody, syncKey)
 
 			method := ctx.Request().Method
 			var err error 
+			requestPath := strings.Join([]string{base, path, "?synckey=", syncKey}, "")
 			if method == "POST" {
 				_, err = http.Post(
-					strings.Join([]string{base, path}, ""),
+					requestPath,
 					ctx.Request().Header["Content-Type"][0],
 					bytes.NewReader(reqBody),
 				)
 			} else if method == "GET" {
-				_, err = http.Get(strings.Join([]string{base, path}, ""))
+				_, err = http.Get(requestPath)
 			}
 			if err != nil {
 				panic(err)

@@ -16,7 +16,7 @@ func server() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.BodyDump(func(ctx echo.Context, reqBody, resBody []byte) {
-		t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody)
+		t.Track(ctx.Path(), ctx.Request().Method, reqBody, resBody, ctx.QueryParam("synckey"))
 	}))
 
 	e.GET("/hi", func(c echo.Context) error {
