@@ -137,8 +137,15 @@ func StartBackend() {
 	})
 
 	e.GET("/", func(c echo.Context) error {
-		return views.Page().Render(context.Background(), c.Response().Writer)
+		ctx, queries := db.GetQueries()
+		records, err := queries.GetRecords(ctx)
+		if err != nil && err != sql.ErrNoRows {
+			panic(err)
+		}
+		return views.Page(records).Render(context.Background(), c.Response().Writer)
 	})
+	e.Static("/assets", "internal/views/assets")
+	// e.File("/", ")
 
 	e.Logger.Fatal(e.Start(":3333"))
 }

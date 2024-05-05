@@ -79,6 +79,41 @@ func (q *Queries) GetApp(ctx context.Context, id int64) (int64, error) {
 	return id, err
 }
 
+const getRecords = `-- name: GetRecords :many
+select id, version, path, method, reqbody, resbody, created_at from record
+`
+
+func (q *Queries) GetRecords(ctx context.Context) ([]Record, error) {
+	rows, err := q.db.QueryContext(ctx, getRecords)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Record
+	for rows.Next() {
+		var i Record
+		if err := rows.Scan(
+			&i.ID,
+			&i.Version,
+			&i.Path,
+			&i.Method,
+			&i.Reqbody,
+			&i.Resbody,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVersion = `-- name: GetVersion :one
 select id, name, app from version
 where name = ?

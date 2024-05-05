@@ -16,3 +16,6 @@ INSERT INTO version (name, app) VALUES (?, ?) RETURNING *;
 
 -- name: CreateRecord :one
 INSERT INTO record (version, path, method, reqbody, resbody) VALUES (?, ?, ?, ?, ?) RETURNING *;
+
+-- name: GetRecords :many
+select * from record

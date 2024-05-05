@@ -1,5 +1,26 @@
 package views
 
-templ Page() {
-	<div>Hello World</div>
+import "shadow_release/internal/db"
+
+
+templ RecordsTable(records []db.Record) {
+	<div>
+		for _, item := range records {
+			<div>
+				{item.Path}
+			</div>
+		}
+	</div>
+}
+
+templ Page(records []db.Record) {
+	<html>
+		<head>
+			<link rel="stylesheet" href="assets/styles.css"></link>
+		</head>
+
+		<body>
+			@RecordsTable(records)
+		</body>
+	</html>
 }
