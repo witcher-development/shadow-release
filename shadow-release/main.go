@@ -122,7 +122,6 @@ func StartBackend() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("recieved", record)
 		ctx, queries := db.GetQueries()
 		db_record, err := queries.CreateRecord(ctx, db.CreateRecordParams{
 			Version: record.Meta.Version,
@@ -152,7 +151,6 @@ func StartBackend() {
 		return views.Page(records, versions).Render(context.Background(), c.Response().Writer)
 	})
 	e.Static("/assets", "internal/views/assets")
-	// e.File("/", ")
 
 	e.Logger.Fatal(e.Start(":3333"))
 }

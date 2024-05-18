@@ -3,6 +3,7 @@ package views
 import (
 "errors"
 "shadow_release/internal/db"
+	"fmt"
 )
 
 
@@ -36,32 +37,93 @@ func getMatchingRecord(currentId int64, key string, records []db.Record) (db.Rec
 	return db.Record{}, errors.New("No Version found by id")
 }
 
+type VersionsUI struct {
+	db.Version
+	Records []RecordUI
+}
 
-templ RecordsTable(records []db.Record, versions []db.Version) {
+type RecordUI struct {
+	db.Record
+	NotFound bool
+	Extra bool
+}
+
+func ProcessRecords(records []db.Record, versions []db.Version) []VersionsUI {
+	if len(records) == 0 || len(versions) == 0 {
+		panic("No Data")
+	}
+
+	result := []VersionsUI{}
+	original := versions[0].ID
+
+	// filling result with versions + empty records array
+	for _, version := range versions {
+		result = append(result, VersionsUI{Version: version})
+	}
+
+	// filling records for the original version
+	for _, record := range records {
+		if record.Version == original {
+			result[0].Records = append(result[0].Records, RecordUI{Record: record})
+			fmt.Println(&record.ID)
+		}
+	}
+
+	// finding matching records for original records
+	for _, originalRecord := range result[0].Records {
+		for recordIndex, record := range records {
+			fmt.Println(originalRecord.ID, record.ID)
+			if originalRecord.ID != record.ID && originalRecord.Synckey == record.Synckey {
+				fmt.Println("match sync key")
+				for versionIndex, resultVersion := range result {
+					if resultVersion.ID == record.Version {
+						fmt.Println("found version to add")
+						result[versionIndex].Records = append(result[versionIndex].Records, RecordUI{Record: record})	
+						break
+					}
+				}
+				break
+			}
+			if recordIndex == len(records) - 1 {
+				for versionIndex, _ := range result {
+					if result[versionIndex].ID == original {
+						continue
+					}
+					result[versionIndex].Records = append(result[versionIndex].Records, RecordUI{NotFound: true})	
+				}
+			}
+		}	
+	}
+
+	for _, item := range result {
+		fmt.Println(item)
+	}
+
+	return result
+}
+
+templ RecordsTable(versions []VersionsUI) {
 	<div>
 		<div class="versions">
 			for _, version := range versions {
 				<div class="version">
 					{version.Name}
+				for _, record := range version.Records {
+					<div class="record">
+						<div class="version">
+							if record.NotFound {
+								<div class="empty">
+									no matching record found
+								</div>
+							} else {
+								<div>{record.Path}</div>
+							}
+						</div>
+					</div>
+				}
 				</div>
 			}
 		</div>
-		for _, record := range filterByVersion(versions[0].ID, records) {
-			<div class="record">
-				<div class="version">
-					{record.Path}
-				</div>
-				<div class="version">
-					if shadow, err := getMatchingRecord(record.ID, record.Synckey, records); err == nil {
-						<div>{shadow.Path}</div>
-					} else {
-						<div class="empty">
-							no matching record found
-						</div>
-					}
-				</div>
-			</div>
-		}
 	</div>
 }
 
@@ -72,7 +134,7 @@ templ Page(records []db.Record, versions []db.Version) {
 		</head>
 
 		<body>
-			@RecordsTable(records, versions)
+			@RecordsTable(ProcessRecords(records, versions))
 		</body>
 	</html>
 }
