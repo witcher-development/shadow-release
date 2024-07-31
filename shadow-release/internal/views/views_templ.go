@@ -58,7 +58,7 @@ type RecordUI struct {
 
 func ProcessRecords(records []db.Record, versions []db.Version) []VersionsUI {
 	if len(records) == 0 || len(versions) == 0 {
-		panic("No Data")
+		return []VersionsUI{}
 	}
 
 	result := []VersionsUI{}
@@ -127,6 +127,12 @@ func RecordsTable(versions []VersionsUI) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		if len(versions) == 0 {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<p>no data</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		for _, version := range versions {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"version\">")
 			if templ_7745c5c3_Err != nil {
@@ -135,7 +141,7 @@ func RecordsTable(versions []VersionsUI) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(version.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/views.templ`, Line: 110, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/views.templ`, Line: 113, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -163,7 +169,7 @@ func RecordsTable(versions []VersionsUI) templ.Component {
 					var templ_7745c5c3_Var3 string
 					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(record.Path)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/views.templ`, Line: 119, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/views.templ`, Line: 122, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 					if templ_7745c5c3_Err != nil {

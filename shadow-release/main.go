@@ -15,16 +15,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 type Tool struct {
-	Key int64 `json:"key"`
+	Key     int64 `json:"key"`
 	Version int64 `json:"version"`
 }
 
 type TrackRequestPayload struct {
-	Meta *Tool `json:"meta"`
-	Path string
-	Method string
+	Meta    *Tool `json:"meta"`
+	Path    string
+	Method  string
 	Reqbody []byte
 	Resbody []byte
 	Synckey string
@@ -32,9 +31,9 @@ type TrackRequestPayload struct {
 
 func (s *Tool) Track(path string, method string, reqbody []byte, resbody []byte, syncKey string) {
 	body := TrackRequestPayload{
-		Meta: s,
-		Path: path,
-		Method: method,
+		Meta:    s,
+		Path:    path,
+		Method:  method,
 		Reqbody: reqbody,
 		Resbody: resbody,
 		Synckey: syncKey,
@@ -54,7 +53,7 @@ func (s *Tool) Track(path string, method string, reqbody []byte, resbody []byte,
 }
 
 type Config struct {
-	Key int64
+	Key     int64
 	Version string
 }
 
@@ -83,7 +82,7 @@ func New(config Config) (s *Tool) {
 	}
 
 	s = &Tool{
-		Key: body.App,
+		Key:     body.App,
 		Version: body.ID,
 	}
 	return s
@@ -105,7 +104,7 @@ func StartBackend() {
 		if err == sql.ErrNoRows {
 			version_new, err := queries.CreateVersion(ctx, db.CreateVersionParams{
 				Name: config.Version,
-				App: config.Key,
+				App:  config.Key,
 			})
 			if err != nil {
 				panic(err)
@@ -116,7 +115,7 @@ func StartBackend() {
 		return c.JSON(http.StatusOK, version)
 	})
 
-	e.POST("/track", func (c echo.Context) error  {
+	e.POST("/track", func(c echo.Context) error {
 		var record TrackRequestPayload
 		err := json.NewDecoder(c.Request().Body).Decode(&record)
 		if err != nil {
@@ -125,8 +124,8 @@ func StartBackend() {
 		ctx, queries := db.GetQueries()
 		db_record, err := queries.CreateRecord(ctx, db.CreateRecordParams{
 			Version: record.Meta.Version,
-			Path: record.Path,
-			Method: record.Method,
+			Path:    record.Path,
+			Method:  record.Method,
 			Reqbody: string(record.Reqbody),
 			Resbody: string(record.Resbody),
 			Synckey: string(record.Synckey),
@@ -154,4 +153,3 @@ func StartBackend() {
 
 	e.Logger.Fatal(e.Start(":3333"))
 }
-

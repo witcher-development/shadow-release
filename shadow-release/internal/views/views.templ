@@ -50,7 +50,7 @@ type RecordUI struct {
 
 func ProcessRecords(records []db.Record, versions []db.Version) []VersionsUI {
 	if len(records) == 0 || len(versions) == 0 {
-		panic("No Data")
+		return []VersionsUI{}
 	}
 
 	result := []VersionsUI{}
@@ -105,6 +105,9 @@ func ProcessRecords(records []db.Record, versions []db.Version) []VersionsUI {
 templ RecordsTable(versions []VersionsUI) {
 	<div>
 		<div class="versions">
+			if len(versions) == 0 {
+				<p>no data</p>
+			}
 			for _, version := range versions {
 				<div class="version">
 					{version.Name}
